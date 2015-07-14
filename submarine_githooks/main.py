@@ -17,6 +17,7 @@
 from __future__ import unicode_literals, division, absolute_import, print_function
 from importlib import import_module
 import os
+import pkg_resources
 from taskr import task, console
 from taskr.contrib.system import run as taskr_run
 from taskr.contrib.validators import validate_boolean
@@ -49,7 +50,7 @@ def install(dry_run=False):
     entry_script_dir = os.path.join(script_home, 'entry')
     entry_script_filename = 'entry.py'
     entry_script_path = os.path.join(script_home, entry_script_filename)
-    entry_script_src_path = os.path.join(source_root, 'hooks.py')
+    entry_script_src_path = pkg_resources.resource_filename(__name__, 'hooks.py')
     checkers_path = os.path.join(script_home, 'checkers')
 
     assert os.path.exists(git_path), 'Cannot find `.git` folder at current working directory.'
@@ -90,7 +91,7 @@ def install(dry_run=False):
 @task
 def setup_script(dest_path='.'):
     file_name = 'setup-githooks'
-    source_path = os.path.join(source_root, file_name)
+    source_path = pkg_resources.resource_filename(__name__, file_name)
     dest_path = os.path.abspath(os.path.join(dest_path, file_name))
     taskr_run('mv {source_path} {dest_path} && chmod +x {dest_path}'.format(
         source_path=source_path, dest_path=dest_path))
