@@ -15,9 +15,11 @@
 #
 
 from __future__ import unicode_literals, division, absolute_import, print_function
+from importlib import import_module
 import os
 from taskr import task
 from taskr.contrib.system import run as taskr_run
+from submarine_githooks.checker import Checker
 
 source_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -82,6 +84,30 @@ def install(dry_run=False):
     # Create checkers room
     run('mkdir -p {checkers_path}'.format(**locals()))
     run('touch {checkers_path}/__init__.py'.format(**locals()))
+
+
+@task
+def vendored_checkers():
+    checker_modules = []
+    checkers_package = 'submarine_githooks.contrib.checkers'
+    checkers_package_path = os.path.join(source_root, 'submarine_githooks', 'contrib', 'checkers')
+    for module_file in os.listdir(checkers_package_path):
+        if os.path.splitext(module_file)[-1] == '.py' and module_file != '__init__.py':
+            checker_module_str = '{}.{}'.format(checkers_package, os.path.splitext(module_file)[0])
+            checker_module = import_module(checker_module_str)
+            for attr in dir(checker_module):
+                if isinstance(getattr(checker_module, attr), Checker):
+                    checker_modules.append(checker_module_str)
+
+    for checker_module in checker_modules:
+        print(checker_module)
+
+
+@task
+def install_checker(checker_module_str):
+    checker_module_path = os.path.join(source_root, *checker_module_str.split('.')) + '.py'
+    taskr_run('mv {} .githooks/checkers/{}'.format(checker_module_path, os.path.split(checker_module_path)[-1]))
+
 
 if __name__ == '__main__':
     task.dispatch()
