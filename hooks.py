@@ -77,28 +77,39 @@ if debug:
 contents = []
 """:type: list[Content]"""
 if hook_name == 'pre-commit':
-    for git_file_path, (status_staged, status_working) in git_repo.status.items():
-        full_file_path = os.path.join(git_repo.source_root, git_file_path)
+    for file_path, (status_staged, status_working) in git_repo.status.items():
         if status_staged in 'TMARC':
-            content = Content.create_with_hook(hook_name,
-                                               full_file_path, lambda f=git_file_path: git_repo.file_content(f))
+            content = Content.create_with_hook(hook_name, file_path)
             if content:
                 contents.append(content)
 elif hook_name == 'commit-msg':
-    commit_message = sys.argv[-1]
-    content = Content.create_with_hook(hook_name, commit_message)
+    commit_message_file_path = sys.argv[-1]
+    content = Content.create_with_hook(hook_name, commit_message_file_path)
     if content:
         contents.append(content)
 elif hook_name == 'post-checkout':
-    original_commit_id, destination_commit_id, branch_checkout = sys.argv[1:]
+    orig_commit_id, dest_commit_id, branch_checkout = sys.argv[1:]
     branch_checkout = branch_checkout == '1'
     if branch_checkout:
-        for changed_file in git_repo.changed_files(original_commit_id, destination_commit_id):
+        for changed_file in git_repo.changed_files(orig_commit_id, dest_commit_id):
             full_file_path = os.path.join(git_repo.source_root, changed_file)
-            content = Content.create_with_hook(hook_name,
-                                               full_file_path, original_commit_id, destination_commit_id)
+            content = Content.create_with_hook(hook_name, full_file_path, orig_commit_id, dest_commit_id)
             if content:
                 contents.append(content)
+elif hook_name == 'post-merge':
+    source_commit = None
+    source_branch = None
+    squash_merge = sys.argv[-1] == '1'
+    for key, value in os.environ.items():
+        if key.startswith('GITHEAD_') and len(key) == 48:
+            source_commit = key[8:]
+            source_branch = value
+    if source_commit and source_branch:
+        for file_path in git_repo.changed_files(commit=source_commit):
+            content = Content.create_with_hook(hook_name, file_path, source_commit, squash_merge)
+            if content:
+                contents.append(content)
+
 if not contents:
     if debug:
         console.warn('No content to check for {}'.format(hook_name))
@@ -114,7 +125,7 @@ if debug:
     console.info('Start check for {}'.format(hook_name), bar_width=120)
 exit_code = 0
 for content in contents:
-    args = (git_repo,) + content.arguments
+    args = (git_repo, hook_name) + content.arguments
     for checker in checkers:
         if content.file_path and not checker.is_active_for_file(content.file_path):
             if debug:
@@ -129,6 +140,7 @@ for content in contents:
             console.error(msg)
             exit_code |= 1
         else:
-            console.success(content.success_message(checker))
+            if debug:
+                console.success(content.success_message(checker))
 
 sys.exit(exit_code)

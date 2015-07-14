@@ -30,10 +30,8 @@ class Content(object):
         :rtype: Content
         """
         klass = None
-        if hook_name in ('pre-commit', 'post-checkout'):
+        if hook_name in ('pre-commit', 'post-checkout', 'post-merge', 'commit-msg'):
             klass = FilePathContent
-        elif hook_name == 'commit-msg':
-            klass = CommitMsgContent
 
         # noinspection PyCallingNonCallable
         return klass(*args) if klass else None
@@ -129,32 +127,3 @@ class FilePathContent(Content):
         :rtype: str
         """
         return 'Invoked "{}" with "{}" successfully'.format(checker.name, self.rel_file_path)
-
-
-class CommitMsgContent(Content):
-
-    def __init__(self, commit_message_path):
-        super(CommitMsgContent, self).__init__()
-        self._arguments = (commit_message_path,)
-
-    def discovered_message(self):
-        """
-        :rtype: str
-        """
-        with open(self._arguments[0], 'r') as f:
-            msg = f.read()
-        return 'Commit message:\n{}'.format(msg)
-
-    def inactive_message(self, checker):
-        """
-        :type checker: aquarium_githooks.checker.Checker
-        :rtype: str
-        """
-        return '"{}" is inactive for commit message checking'.format(checker.name)
-
-    def success_message(self, checker):
-        """
-        :type checker: aquarium_githooks.checker.Checker
-        :rtype: str
-        """
-        return 'Invoked "{}" successfully'.format(checker.name)

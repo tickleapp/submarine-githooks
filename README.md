@@ -11,23 +11,25 @@ from submarine_githooks.checker import checker
 
 @checker
 @checker.active_hooks('pre-commit')
-def pre_commit(git_repo, file_path, content_loader):
+def pre_commit(git_repo, hook_name, file_path):
     """
     :param git_repo: a GitRepo instance representing current git repo
     :type git_repo: taskr.contrib.git.GitRepo
+    :param hook_name: the hook being executing
+    :type hook_name: str
     :param file_path: the path to of a file to be committed
     :type file_path: str
-    :param content_loader: a callable that will return the content of staged file to be committed
-    :type content_loader: () -> (str | bytes)
     """
 
 
 @checker
 @checker.active_hooks('commit-msg')
-def commit_msg(git_repo, commit_message_filepath):
+def commit_msg(git_repo, hook_name, commit_message_filepath):
     """
     :param git_repo: a GitRepo instance representing current git repo
     :type git_repo: taskr.contrib.git.GitRepo
+    :param hook_name: the hook being executing
+    :type hook_name: str
     :param commit_message_filepath: a text file which contains the commit message
     :type commit_message_filepath: str
     """
@@ -35,10 +37,12 @@ def commit_msg(git_repo, commit_message_filepath):
 
 @checker
 @checker.active_hooks('post-checkout')
-def post_checkout(git_repo, file_path, source_commit_id, destination_commit_id):
+def post_checkout(git_repo, hook_name, file_path, source_commit_id, destination_commit_id):
     """
     :param git_repo: a GitRepo instance representing current git repo
     :type git_repo: taskr.contrib.git.GitRepo
+    :param hook_name: the hook being executing
+    :type hook_name: str
     :param file_path: the path to of a file to be committed
     :type file_path: str
     :param source_commit_id: ref of the previous HEAD
