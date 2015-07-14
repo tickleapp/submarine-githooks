@@ -87,6 +87,15 @@ def install(dry_run=False):
 
 
 @task
+def setup_script(dest_path='.'):
+    file_name = 'setup-githooks'
+    source_path = os.path.join(source_root, file_name)
+    dest_path = os.path.abspath(os.path.join(dest_path, file_name))
+    taskr_run('mv {source_path} {dest_path} && chmod +x {dest_path}'.format(
+        source_path=source_path, dest_path=dest_path))
+
+
+@task
 def vendored_checkers():
     checker_modules = []
     checkers_package = 'submarine_githooks.contrib.checkers'
