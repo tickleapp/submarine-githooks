@@ -4,7 +4,7 @@ Git-hooks used by [Tickle](https://tickleapp.com)
 
 ## Checkers
 
-Submarine will find checkers from Python modules you but under `.githooks/checkers`.
+Submarine will find checkers from Python modules you put under `.githooks/checkers`.
 All checkers should be an instance of `submarine_githooks.checker.Checker`, the easiest way to
 create a checker is:
 ```python
