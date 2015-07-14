@@ -35,7 +35,7 @@ setup(name='submarine-githooks',
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
-          'taskr>=0.2.24',
+          'taskr>=0.2.26',
           'six>=1.8',
       ],
 
