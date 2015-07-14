@@ -22,7 +22,6 @@ class Content(object):
 
     def __init__(self):
         self._arguments = ()
-        self._hook_name = None
 
     @staticmethod
     def create_with_hook(hook_name, *args):
@@ -31,8 +30,8 @@ class Content(object):
         :rtype: Content
         """
         klass = None
-        if hook_name == 'pre-commit':
-            klass = PreCommitContent
+        if hook_name in ('pre-commit', 'post-checkout'):
+            klass = FilePathContent
         elif hook_name == 'commit-msg':
             klass = CommitMsgContent
 
@@ -42,10 +41,6 @@ class Content(object):
     @property
     def arguments(self):
         return self._arguments
-
-    @property
-    def hook_name(self):
-        return self._hook_name
 
     @property
     def file_path(self):
@@ -86,12 +81,11 @@ class Content(object):
         return ''
 
 
-class PreCommitContent(Content):
+class FilePathContent(Content):
 
-    def __init__(self, file_path, content_loader):
-        super(PreCommitContent, self).__init__()
-        self._arguments = (file_path, content_loader)
-        self._hook_name = 'pre-commit'
+    def __init__(self, *args):
+        super(FilePathContent, self).__init__()
+        self._arguments = args
 
     @property
     def file_path(self):
@@ -127,7 +121,7 @@ class PreCommitContent(Content):
         """
         # noinspection PyTypeChecker
         return 'file: {}\n{}'.format(self.rel_file_path,
-                                     super(PreCommitContent, self).error_message(checker, exception))
+                                     super(FilePathContent, self).error_message(checker, exception))
 
     def success_message(self, checker):
         """
@@ -142,7 +136,6 @@ class CommitMsgContent(Content):
     def __init__(self, commit_message_path):
         super(CommitMsgContent, self).__init__()
         self._arguments = (commit_message_path,)
-        self._hook_name = 'commit-msg'
 
     def discovered_message(self):
         """

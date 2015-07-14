@@ -89,7 +89,16 @@ elif hook_name == 'commit-msg':
     content = Content.create_with_hook(hook_name, commit_message)
     if content:
         contents.append(content)
-
+elif hook_name == 'post-checkout':
+    original_commit_id, destination_commit_id, branch_checkout = sys.argv[1:]
+    branch_checkout = branch_checkout == '1'
+    if branch_checkout:
+        for changed_file in git_repo.changed_files(original_commit_id, destination_commit_id):
+            full_file_path = os.path.join(git_repo.source_root, changed_file)
+            content = Content.create_with_hook(hook_name,
+                                               full_file_path, original_commit_id, destination_commit_id)
+            if content:
+                contents.append(content)
 if not contents:
     if debug:
         console.warn('No content to check for {}'.format(hook_name))
