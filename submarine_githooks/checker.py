@@ -76,6 +76,23 @@ class CheckerManager(object):
             return checker_obj
         return wrapper
 
+    def file_name(self, *file_names):
+        def wrapper(callable_or_checker_obj):
+            checker_obj = self._get_or_create_checker(callable_or_checker_obj)
+            checker_obj.is_active_for_file = lambda path: os.path.split(path)[-1] in file_names
+            return checker_obj
+        return wrapper
+
+    def file_validate(self, callable_obj):
+        """
+        :type callable_obj: (str) -> bool
+        """
+        def wrapper(callable_or_checker_obj):
+            checker_obj = self._get_or_create_checker(callable_or_checker_obj)
+            checker_obj.is_active_for_file = callable_obj
+            return checker_obj
+        return wrapper
+
     def active_hooks(self, *active_hook_names):
         def wrapper(callable_or_checker_obj):
             checker_obj = self._get_or_create_checker(callable_or_checker_obj)
