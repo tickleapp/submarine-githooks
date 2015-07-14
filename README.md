@@ -21,7 +21,7 @@ You could reference the arguments which will be passed in at following section.
 
 ### Checker settings
 
-### Active hooks
+#### Active hooks
 
 ```python
 @checker
