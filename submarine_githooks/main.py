@@ -17,8 +17,9 @@
 from __future__ import unicode_literals, division, absolute_import, print_function
 from importlib import import_module
 import os
-from taskr import task
+from taskr import task, console
 from taskr.contrib.system import run as taskr_run
+from taskr.contrib.validators import validate_boolean
 from submarine_githooks.checker import Checker
 
 source_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -114,8 +115,15 @@ def vendored_checkers():
 
 @task
 def install_checker(checker_module_str):
-    checker_module_path = os.path.join(source_root, *checker_module_str.split('.')) + '.py'
-    taskr_run('mv {} .githooks/checkers/{}'.format(checker_module_path, os.path.split(checker_module_path)[-1]))
+    dest_checkers_path = '.githooks/checkers'
+    if not os.path.exists(dest_checkers_path):
+        raise IOError('No such directory: {}'.format(dest_checkers_path))
+
+    src_checker_module_path = os.path.join(source_root, *checker_module_str.split('.')) + '.py'
+    dest_checker_module_path = os.path.join(dest_checkers_path, os.path.split(src_checker_module_path)[-1])
+    if (not os.path.exists(dest_checker_module_path) or
+            console.input('File exists. Overwrite?', default='N', hint='y/n', validators=[validate_boolean])):
+        taskr_run('cp {} {}'.format(src_checker_module_path, dest_checker_module_path))
 
 
 if __name__ == '__main__':
