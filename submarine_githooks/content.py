@@ -20,8 +20,8 @@ import os
 
 class Content(object):
 
-    def __init__(self):
-        self._arguments = ()
+    def __init__(self, *args):
+        self._arguments = args
 
     @staticmethod
     def create_with_hook(hook_name, *args):
@@ -32,6 +32,8 @@ class Content(object):
         klass = None
         if hook_name in ('pre-commit', 'post-checkout', 'post-merge', 'commit-msg'):
             klass = FilePathContent
+        elif hook_name == 'pre-push':
+            klass = PrePushContent
 
         # noinspection PyCallingNonCallable
         return klass(*args) if klass else None
@@ -81,10 +83,6 @@ class Content(object):
 
 class FilePathContent(Content):
 
-    def __init__(self, *args):
-        super(FilePathContent, self).__init__()
-        self._arguments = args
-
     @property
     def file_path(self):
         """
@@ -127,3 +125,27 @@ class FilePathContent(Content):
         :rtype: str
         """
         return 'Invoked "{}" with "{}" successfully'.format(checker.name, self.rel_file_path)
+
+
+class PrePushContent(Content):
+
+    def discovered_message(self):
+        """
+        :rtype: str
+        """
+        return 'Found push action to {} ({})'.format(self.arguments[0], self.arguments[1])
+
+    def inactive_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        # noinspection PyTypeChecker
+        return '"{}" is not active to push action'.format(checker.name)
+
+    def success_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        return 'Invoked "{}" with push information'.format(checker.name)

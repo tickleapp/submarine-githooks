@@ -64,7 +64,8 @@ for checker_path in os.listdir(checkers_package_dir):
 if not checkers:
     if debug:
         console.warn('No checkers for {}'.format(hook_name))
-    # sys.exit(0)
+    else:
+        sys.exit(0)
 if debug:
     for checker in checkers:
         console.success('Found checker: {}'.format(checker.name))
@@ -109,11 +110,25 @@ elif hook_name == 'post-merge':
             content = Content.create_with_hook(hook_name, file_path, source_commit, squash_merge)
             if content:
                 contents.append(content)
+elif hook_name == 'pre-push':
+    remote_name, remote_url = sys.argv[1:]
+    local_ref, local_commit_id, remote_ref, remote_commit_id = sys.stdin.read().strip().split(' ')
+    branch_deleted_from_local = local_commit_id == '0'*40
+    new_branch_to_remote = remote_commit_id == '0'*40
+    content = Content.create_with_hook(hook_name,
+                                       remote_name, remote_url,
+                                       local_ref, local_commit_id,
+                                       remote_ref, remote_commit_id,
+                                       branch_deleted_from_local,
+                                       new_branch_to_remote)
+    if content:
+        contents.append(content)
 
 if not contents:
     if debug:
         console.warn('No content to check for {}'.format(hook_name))
-    sys.exit(0)
+    else:
+        sys.exit(0)
 if debug:
     for content in contents:
         console.success(content.discovered_message())
