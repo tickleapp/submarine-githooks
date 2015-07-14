@@ -1,5 +1,3 @@
 include MANIFEST.in
-include hooks.py
-include setup-githooks
-include README.md
-include LICENSE.md
+include hooks.py setup-githooks
+include README.md LICENSE.md
