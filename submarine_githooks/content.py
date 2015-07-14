@@ -33,6 +33,8 @@ class Content(object):
         klass = None
         if hook_name == 'pre-commit':
             klass = PreCommitContent
+        elif hook_name == 'commit-msg':
+            klass = CommitMsgContent
 
         # noinspection PyCallingNonCallable
         return klass(*args) if klass else None
@@ -50,7 +52,7 @@ class Content(object):
         """
         :rype: str | None
         """
-        return self._arguments[0]
+        return None
 
     # Messages
 
@@ -58,8 +60,7 @@ class Content(object):
         """
         :rtype: str
         """
-        # noinspection PyTypeChecker
-        return 'Found content: {}'.format(os.path.relpath(self.file_path)) if self.file_path else ''
+        return ''
 
     def inactive_message(self, checker):
         """
@@ -67,8 +68,7 @@ class Content(object):
         :rtype: str
         """
         # noinspection PyTypeChecker
-        return '"{}" is inactive for "{}"'.format(checker.name, os.path.relpath(self.file_path)) \
-            if self.file_path else ''
+        return ''
 
     def error_message(self, checker, exception):
         """
@@ -76,17 +76,14 @@ class Content(object):
         :type exception: Exception
         :rtype: str
         """
-        # noinspection PyTypeChecker
-        return '{} hook fails\nchecker: {}\nfile: {}\n{}'\
-            .format(self.hook_name, checker.name, os.path.relpath(self.file_path), str(exception))\
-            if self.file_path else ''
+        return str(exception)
 
     def success_message(self, checker):
         """
         :type checker: aquarium_githooks.checker.Checker
         :rtype: str
         """
-        return 'Invoked "{}" with "{}" successfully'.format(checker.name, self.file_path) if self.file_path else ''
+        return ''
 
 
 class PreCommitContent(Content):
@@ -95,3 +92,76 @@ class PreCommitContent(Content):
         super(PreCommitContent, self).__init__()
         self._arguments = (file_path, content_loader)
         self._hook_name = 'pre-commit'
+
+    @property
+    def file_path(self):
+        """
+        :rype: str | None
+        """
+        return self._arguments[0]
+
+    @property
+    def rel_file_path(self):
+        return os.path.relpath(self.file_path)
+
+    def discovered_message(self):
+        """
+        :rtype: str
+        """
+        # noinspection PyTypeChecker
+        return 'Found content: {}'.format(self.rel_file_path)
+
+    def inactive_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        # noinspection PyTypeChecker
+        return '"{}" is inactive for "{}"'.format(checker.name, self.rel_file_path)
+
+    def error_message(self, checker, exception):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :type exception: Exception
+        :rtype: str
+        """
+        # noinspection PyTypeChecker
+        return 'file: {}\n{}'.format(self.rel_file_path,
+                                     super(PreCommitContent, self).error_message(checker, exception))
+
+    def success_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        return 'Invoked "{}" with "{}" successfully'.format(checker.name, self.rel_file_path)
+
+
+class CommitMsgContent(Content):
+
+    def __init__(self, commit_message_path):
+        super(CommitMsgContent, self).__init__()
+        self._arguments = (commit_message_path,)
+        self._hook_name = 'commit-msg'
+
+    def discovered_message(self):
+        """
+        :rtype: str
+        """
+        with open(self._arguments[0], 'r') as f:
+            msg = f.read()
+        return 'Commit message:\n{}'.format(msg)
+
+    def inactive_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        return '"{}" is inactive for commit message checking'.format(checker.name)
+
+    def success_message(self, checker):
+        """
+        :type checker: aquarium_githooks.checker.Checker
+        :rtype: str
+        """
+        return 'Invoked "{}" successfully'.format(checker.name)

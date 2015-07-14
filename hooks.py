@@ -24,7 +24,7 @@ from submarine_githooks.checker import Checker
 from submarine_githooks.content import Content
 
 
-# Get options
+# Get options and constants ============================================================================================
 try:
     debug = int(os.environ.get('SUBMARINE_GITHOOK_DEBUG', '0')) != 0
 except ValueError:
@@ -45,7 +45,8 @@ sys.path.append(script_home)
 hook_name = os.path.split(sys.argv[0])[-1]
 checkers_package_dir = os.path.join(script_home, 'checkers')
 
-# Find checkers
+
+# Find checkers ========================================================================================================
 if debug:
     console.show('')
     console.info('Load checkers for {}'.format(hook_name), bar_width=120)
@@ -59,15 +60,17 @@ for checker_path in os.listdir(checkers_package_dir):
             checker = getattr(checker_module, attr)
             if isinstance(checker, Checker) and checker.is_active_for_hook(hook_name):
                 checkers.append(checker)
+
 if not checkers:
     if debug:
         console.warn('No checkers for {}'.format(hook_name))
-    sys.exit(0)
+    # sys.exit(0)
 if debug:
     for checker in checkers:
         console.success('Found checker: {}'.format(checker.name))
 
-# Find content to be checked
+
+# Find content to be checked ===========================================================================================
 if debug:
     console.show('')
     console.info('Load contents for {}'.format(hook_name), bar_width=120)
@@ -81,6 +84,12 @@ if hook_name == 'pre-commit':
                                                full_file_path, lambda f=git_file_path: git_repo.file_content(f))
             if content:
                 contents.append(content)
+elif hook_name == 'commit-msg':
+    commit_message = sys.argv[-1]
+    content = Content.create_with_hook(hook_name, commit_message)
+    if content:
+        contents.append(content)
+
 if not contents:
     if debug:
         console.warn('No content to check for {}'.format(hook_name))
@@ -89,7 +98,8 @@ if debug:
     for content in contents:
         console.success(content.discovered_message())
 
-# Go
+
+# Go, start to check ===================================================================================================
 if debug:
     console.show('')
     console.info('Start check for {}'.format(hook_name), bar_width=120)
@@ -101,16 +111,15 @@ for content in contents:
             if debug:
                 console.success(content.inactive_message(checker))
             continue
-
         # noinspection PyBroadException
         try:
             checker(*args)
         except Exception as e:
             console.show('')
-            console.error(content.error_message(checker, e))
+            msg = '{} hook fails\nchecker: {}\n{}'.format(hook_name, checker.name, content.error_message(checker, e))
+            console.error(msg)
             exit_code |= 1
         else:
             console.success(content.success_message(checker))
 
-# Done
 sys.exit(exit_code)
