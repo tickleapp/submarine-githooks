@@ -24,7 +24,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), 'r') as f:
     long_description = f.read()
 
 setup(name='submarine-githooks',
-      version='0.0.1.2',
+      version='0.0.1-3',
       url='https://github.com/tickleapp/submarine-githooks',
       license='Apache License 2.0',
       author='sodas',
@@ -33,6 +33,7 @@ setup(name='submarine-githooks',
       long_description=long_description,
 
       packages=find_packages(),
+      include_package_data=True,
       install_requires=[
           'taskr>=0.2.24',
           'six>=1.8',
