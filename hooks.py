@@ -139,23 +139,28 @@ if debug:
     console.show('')
     console.info('Start check for {}'.format(hook_name), bar_width=120)
 exit_code = 0
-for content in contents:
-    args = (git_repo, hook_name) + content.arguments
-    for checker in checkers:
-        if content.file_path and not checker.is_active_for_file(content.file_path):
-            if debug:
-                console.success(content.inactive_message(checker))
-            continue
-        # noinspection PyBroadException
-        try:
-            checker(*args)
-        except Exception as e:
-            console.show('')
-            msg = '{} hook fails\nchecker: {}\n{}'.format(hook_name, checker.name, content.error_message(checker, e))
-            console.error(msg)
-            exit_code |= 1
-        else:
-            if debug:
-                console.success(content.success_message(checker))
+for checker in checkers:
+    if checker.once:
+        checker(git_repo, hook_name, map(lambda _content: _content.arguments, contents))
+    else:
+        for content in contents:
+            args = (git_repo, hook_name) + content.arguments
+            if content.file_path and not checker.is_active_for_file(content.file_path):
+                if debug:
+                    console.success(content.inactive_message(checker))
+                continue
+            # noinspection PyBroadException
+            try:
+                checker(*args)
+            except Exception as e:
+                console.show('')
+                msg = '{} hook fails\nchecker: {}\n{}'.format(hook_name,
+                                                              checker.name,
+                                                              content.error_message(checker, e))
+                console.error(msg)
+                exit_code |= 1
+            else:
+                if debug:
+                    console.success(content.success_message(checker))
 
 sys.exit(exit_code)

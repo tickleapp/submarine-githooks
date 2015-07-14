@@ -31,6 +31,7 @@ class Checker(object):
         """:type: (str) -> bool"""
         self.active_hooks = []
         """:type: list[str]"""
+        self.once = False
 
     def __call__(self, *args, **kwargs):
         self.callable(*args, **kwargs)
@@ -82,6 +83,11 @@ class CheckerManager(object):
             checker_obj.is_active_for_file = lambda path: os.path.split(path)[-1] in file_names
             return checker_obj
         return wrapper
+
+    def once(self, callable_or_checker_obj):
+        checker_obj = self._get_or_create_checker(callable_or_checker_obj)
+        checker_obj.once = True
+        return checker_obj
 
     def file_validate(self, callable_obj):
         """
