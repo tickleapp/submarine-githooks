@@ -85,12 +85,19 @@ def install(dry_run=False, verbose=False):
 
 
 @task
-def setup_script(dest_path='.'):
-    file_name = 'setup-githooks'
-    source_path = pkg_resources.resource_filename(__name__, file_name)
-    dest_path = os.path.abspath(os.path.join(dest_path, file_name))
-    taskr_run('mv {source_path} {dest_path} && chmod +x {dest_path}'.format(
-        source_path=source_path, dest_path=dest_path))
+def setup_script(dest_path='.', script_name='setup-githooks'):
+    content = '''#!/bin/sh
+
+# Check Python dependency
+python -c "import submarine_githooks" 1>/dev/null 2>&1 || pip install -U submarine-githooks
+# Setup
+submarine-githooks install
+'''
+    dest_path = os.path.abspath(os.path.join(dest_path, script_name))
+
+    with open(dest_path, 'w') as f:
+        f.write(content)
+    taskr_run('chmod +x {dest_path}'.format(**locals()))
 
 
 @task
