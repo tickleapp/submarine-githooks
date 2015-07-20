@@ -26,17 +26,17 @@ git_hook_link_target="../${entry_container_path}"
 
 # Check git
 if !(git status 1>/dev/null 2>&1 && [ -d "${git_path}" ]); then
-    echo -e "\033[33mCannot find \`.git\` folder (at current directory) to setup git hooks.\033[m"
+    echo "\033[33mCannot find \`.git\` folder (at current directory) to setup git hooks.\033[m"
     exit 1
 fi
 
 # Check Python dependency
-python -c "import submarine-githooks" 1>/dev/null 2>&1 || pip install -U submarine-githooks
+python -c "import submarine_githooks" 1>/dev/null 2>&1 || pip install -U submarine-githooks
 
 # Check if installed
 if [ "`SUBMARINE_GITHOOK_INSTALL_TEST=1 ${entry_script_path}`" != "submarine-githooks 1" ]; then
-    echo -e "\033[31mCannot find \"${entry_script_path}\"\033[m"
-    echo -e "\033[31mCall \`submarine-githooks install\` to setup githooks instead of running this\033[m"
+    echo "\033[31mCannot find \"${entry_script_path}\"\033[m"
+    echo "\033[31mCall \`submarine-githooks install\` to setup githooks instead of running this\033[m"
     exit 2
 fi
 

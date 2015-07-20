@@ -42,6 +42,7 @@ setup(name='submarine-githooks',
       entry_points={
           'console_scripts': [
               'submarine-githooks = submarine_githooks.main:task.dispatch',
+              'submarine-githooks-entry = submarine_githooks.hooks',
           ],
       },
 

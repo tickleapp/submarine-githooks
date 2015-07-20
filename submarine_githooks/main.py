@@ -17,6 +17,7 @@
 from __future__ import unicode_literals, division, absolute_import, print_function
 from importlib import import_module
 import os
+import datetime
 import pkg_resources
 from taskr import task, console
 from taskr.contrib.system import run as taskr_run
@@ -43,49 +44,44 @@ hook_names = (
 
 
 @task
-@task.set_argument('-d', '--dry-run', action='store_true')
-def install(dry_run=False):
+def install(dry_run=False, verbose=False):
     git_path = '.git'
+    git_hooks_path = os.path.join(git_path, 'hooks')
     script_home = '.githooks'
-    entry_script_dir = os.path.join(script_home, 'entry')
-    entry_script_filename = 'entry.py'
-    entry_script_path = os.path.join(script_home, entry_script_filename)
-    entry_script_src_path = pkg_resources.resource_filename(__name__, 'hooks.py')
-    checkers_path = os.path.join(script_home, 'checkers')
+    checkers_home = script_home
+    entry_command_path, _ = taskr_run('which submarine-githooks-entry')
 
+    assert entry_command_path, 'Cannot find the location of `submarine-githooks-entry`'
     assert os.path.exists(git_path), 'Cannot find `.git` folder at current working directory.'
 
     def run(command):
         if dry_run:
             print(command)
         else:
-            taskr_run(command)
+            taskr_run(command, print_command=verbose, capture_output=False)
 
-    git_hook_path = os.path.join(git_path, 'hooks')
-    backup_git_hook_path = os.path.join(git_path, 'hooks.original')
-
-    # Check whether setup is ready or not
-    if not dry_run:
-        stdout, _ = taskr_run('SUBMARINE_GITHOOK_INSTALL_TEST=1 {entry_script_path}'.format(**locals()),
-                              use_shell=True)
-        if stdout == 'submarine-githooks 1':
-            return  # Installed
-
-    # Move current git hooks as backup
-    run('mv {git_hook_path} {backup_git_hook_path}'.format(**locals()))
-    # Create links from .git/hooks to .aquarium_githooks/hooks
-    run('ln -s ../{entry_script_dir} {git_hook_path}'.format(**locals()))
-    # Create folder for aquarium-githooks
-    run('mkdir -p {entry_script_dir}'.format(**locals()))
     # Create hooks
+    hook_link_commands = []
     for hook_name in hook_names:
-        run('ln -s ../{entry_script_filename} {entry_script_dir}/{hook_name}'.format(**locals()))
-    # Setup script
-    run('cp {entry_script_src_path} {entry_script_path}'.format(**locals()))
-    run('chmod +x {entry_script_path}'.format(**locals()))
+        target_hook_path = '{git_hooks_path}/{hook_name}'.format(**locals())
+        if os.path.abspath(os.path.realpath(target_hook_path)) != os.path.abspath(entry_command_path):
+            if os.path.exists(target_hook_path):
+                hook_link_commands.append('mv {target_hook_path} {target_hook_path}-{timestamp}'.format(
+                    timestamp=datetime.datetime.now().strftime('%Y%m%d-%H%M%S'),
+                    **locals())
+                )
+            hook_link_commands.append('ln -s {entry_command_path} {git_hooks_path}/{hook_name}'.format(**locals()))
+
+    if hook_link_commands:
+        run('mkdir -p {git_hooks_path}'.format(**locals()))
+        for hook_link_command in hook_link_commands:
+            run(hook_link_command)
+
     # Create checkers room
-    run('mkdir -p {checkers_path}'.format(**locals()))
-    run('touch {checkers_path}/__init__.py'.format(**locals()))
+    if not os.path.exists(checkers_home):
+        run('mkdir -p {checkers_home}'.format(**locals()))
+    if not os.path.exists('{checkers_home}/__init__.py'.format(**locals())):
+        run('touch {checkers_home}/__init__.py'.format(**locals()))
 
 
 @task
@@ -116,7 +112,7 @@ def vendored_checkers():
 
 @task
 def install_checker(checker_module_str):
-    dest_checkers_path = '.githooks/checkers'
+    dest_checkers_path = '.githooks'
     if not os.path.exists(dest_checkers_path):
         raise IOError('No such directory: {}'.format(dest_checkers_path))
 
