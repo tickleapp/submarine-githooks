@@ -37,6 +37,7 @@ setup(name='submarine-githooks',
       install_requires=[
           'taskr>=0.2.26',
           'six>=1.8',
+          'PyYAML>=3.0',
       ],
 
       entry_points={
