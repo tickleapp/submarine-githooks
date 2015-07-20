@@ -22,7 +22,7 @@ This command creates a `setup-githooks` for your collaborators to setup git hook
 
 ## Checkers
 
-Submarine will find checkers from Python modules you put under `.githooks/checkers`.
+Submarine will find checkers from Python modules you put under `.githooks`.
 All checkers should be an instance of `submarine_githooks.checker.Checker`, the easiest way to
 create a checker is:
 ```python
@@ -33,7 +33,7 @@ from submarine_githooks.checker import checker
 def a_simple_checker(*args):
     pass
 ```
-and then saves it to `.githooks/checkers` as `some_checker.py`
+and then saves it to `.githooks` as `some_checker.py`
 
 You could reference the arguments which will be passed in at following section.
 
@@ -65,7 +65,8 @@ def third_checker(*args):
 By registering active hooks, the checker will then work only for that type of git hook.
 (By default, checkers works for all type of git hooks)
 
-In the above example, the first checker works only for `pre-commit` hook, and the following 2 works for both `pre-commit` and `post-merge`.
+In the above example, the first checker works only for `pre-commit` hook,
+and the following 2 works for both `pre-commit` and `post-merge`.
 
 Reference: [git hooks types](https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks).
 
@@ -203,3 +204,5 @@ def pre_push(git_repo, hook_name,
     :type new_branch_to_remote: bool
     """
 ```
+
+_TODO: configurations_
