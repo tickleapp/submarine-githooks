@@ -22,20 +22,40 @@ from taskr import console
 from taskr.contrib.git import GitRepo
 import yaml
 from submarine_githooks.checker import Checker
+from submarine_githooks.constants import hook_names
 from submarine_githooks.content import Content
 
 
 def main():
     # Get options and constants ========================================================================================
 
-    # from `.git/hooks/pre-commit`
-    source_root = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..', '..'))
+    # Find source root
+    callee = sys.argv[0]
+    if callee.startswith('.git/hooks'):
+        # from `.git/hooks/pre-commit`
+        source_root = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..', '..'))
+        hook_name = os.path.split(sys.argv[0])[-1]
+    else:
+        # Call directly
+        source_root = os.getcwd()
+        while not os.path.exists(os.path.join(source_root, '.git')):
+            if source_root == '/':
+                console.error('Cannot find .git directory.')
+                exit(1)
+
+            source_root = os.path.abspath(os.path.join(source_root, '..'))
+
+        hook_name = sys.argv[1] if len(sys.argv) > 1 else 'pre-commit'
+
+    if hook_name not in hook_names:
+        console.error('Invalid hook name. Choices={{{}}}'.format(','.join(hook_names)))
+        exit(1)
+
+    # Define constants
     git_hooks_home = os.path.join(source_root, '.githooks')
     git_repo = GitRepo(source_root)
     # setup python path
     sys.path.append(git_hooks_home)
-    # find hook name and python pacakges
-    hook_name = os.path.split(sys.argv[0])[-1]
     checkers_package_dir = git_hooks_home
 
     config = {
@@ -63,6 +83,10 @@ def main():
                     config[key] = value
 
     debug = config['debug']
+    if debug:
+        console.info('Found .git at {}'.format(source_root))
+        if os.path.exists(local_config_path):
+            console.info('Loaded config from {}'.format(local_config_path))
 
     # Find checkers ====================================================================================================
     if debug:

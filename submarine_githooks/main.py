@@ -18,29 +18,13 @@ from __future__ import unicode_literals, division, absolute_import, print_functi
 from importlib import import_module
 import os
 import datetime
-import pkg_resources
 from taskr import task, console
 from taskr.contrib.system import run as taskr_run
 from taskr.contrib.validators import validate_boolean
 from submarine_githooks.checker import Checker
+from submarine_githooks.constants import hook_names
 
 source_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-hook_names = (
-    'applypatch-msg',
-    'pre-applypatch',
-    'post-applypatch',
-    'pre-commit',
-    'prepare-commit-msg',
-    'commit-msg',
-    'post-commit',
-    'pre-rebase',
-    'post-checkout',
-    'post-merge',
-    'pre-auto-gc',
-    'post-rewrite',
-    'pre-push',
-)
 
 
 @task
