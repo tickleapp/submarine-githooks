@@ -106,8 +106,6 @@ def main():
     if not checkers:
         if debug:
             console.warn('No checkers for {}'.format(hook_name))
-        else:
-            sys.exit(0)
     if debug:
         for checker in checkers:
             console.success('Found checker: {}'.format(checker.name))
@@ -168,8 +166,6 @@ def main():
     if not contents:
         if debug:
             console.warn('No content to check for {}'.format(hook_name))
-        else:
-            sys.exit(0)
     if debug:
         for content in contents:
             console.success(content.discovered_message())
@@ -181,7 +177,15 @@ def main():
     exit_code = 0
     for checker in checkers:
         if checker.once:
-            checker(git_repo, hook_name, map(lambda _content: _content.arguments, contents))
+            # noinspection PyBroadException
+            try:
+                checker(git_repo, hook_name, map(lambda _content: _content.arguments, contents))
+            except Exception as e:
+                console.error('{} hook fails\nchecker: {}\n{}'.format(hook_name, checker.name, str(e)))
+                exit_code |= 1
+            else:
+                if debug:
+                    console.success('{} checker success'.format(checker.name))
         else:
             for content in contents:
                 args = (git_repo, hook_name) + content.arguments
@@ -194,10 +198,9 @@ def main():
                     checker(*args)
                 except Exception as e:
                     console.show('')
-                    msg = '{} hook fails\nchecker: {}\n{}'.format(hook_name,
+                    console.error('{} hook fails\nchecker: {}\n{}'.format(hook_name,
                                                                   checker.name,
-                                                                  content.error_message(checker, e))
-                    console.error(msg)
+                                                                  content.error_message(checker, e)))
                     exit_code |= 1
                 else:
                     if debug:
