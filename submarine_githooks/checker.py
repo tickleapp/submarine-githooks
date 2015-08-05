@@ -84,6 +84,13 @@ class CheckerManager(object):
             return checker_obj
         return wrapper
 
+    def file_path(self, *file_paths):
+        def wrapper(callable_or_checker_obj):
+            checker_obj = self._get_or_create_checker(callable_or_checker_obj)
+            checker_obj.is_active_for_file = lambda path: path in file_paths
+            return checker_obj
+        return wrapper
+
     def file_validate(self, callable_obj):
         """
         :type callable_obj: (str) -> bool
