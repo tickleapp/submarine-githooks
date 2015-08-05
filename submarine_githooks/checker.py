@@ -84,11 +84,6 @@ class CheckerManager(object):
             return checker_obj
         return wrapper
 
-    def once(self, callable_or_checker_obj):
-        checker_obj = self._get_or_create_checker(callable_or_checker_obj)
-        checker_obj.once = True
-        return checker_obj
-
     def file_validate(self, callable_obj):
         """
         :type callable_obj: (str) -> bool
@@ -98,6 +93,11 @@ class CheckerManager(object):
             checker_obj.is_active_for_file = callable_obj
             return checker_obj
         return wrapper
+
+    def once(self, callable_or_checker_obj):
+        checker_obj = self._get_or_create_checker(callable_or_checker_obj)
+        checker_obj.once = True
+        return checker_obj
 
     def active_hooks(self, *active_hook_names):
         def wrapper(callable_or_checker_obj):
