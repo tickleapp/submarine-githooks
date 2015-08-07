@@ -30,7 +30,7 @@ def main():
     # Get options and constants ========================================================================================
 
     # Find source root
-    callee = sys.argv[0]
+    callee = os.path.relpath(sys.argv[0])
     if callee.startswith('.git/hooks'):
         # from `.git/hooks/pre-commit`
         source_root = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..', '..'))
@@ -48,7 +48,7 @@ def main():
         hook_name = sys.argv[1] if len(sys.argv) > 1 else 'pre-commit'
 
     if hook_name not in hook_names:
-        console.error('Invalid hook name. Choices={{{}}}'.format(','.join(hook_names)))
+        console.error('Invalid hook name. got "{}" Choices={{{}}}'.format(hook_name, ','.join(hook_names)))
         exit(1)
 
     # Define constants
