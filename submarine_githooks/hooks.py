@@ -132,8 +132,8 @@ def main():
         branch_checkout = branch_checkout == '1'
         if branch_checkout:
             for changed_file in git_repo.changed_files(orig_commit_id, dest_commit_id):
-                full_file_path = os.path.join(git_repo.source_root, changed_file)
-                content = Content.create_with_hook(hook_name, full_file_path, orig_commit_id, dest_commit_id)
+                file_path = os.path.relpath(os.path.join(git_repo.source_root, changed_file), git_repo.source_root)
+                content = Content.create_with_hook(hook_name, file_path, orig_commit_id, dest_commit_id)
                 if content:
                     contents.append(content)
     elif hook_name == 'post-merge':
